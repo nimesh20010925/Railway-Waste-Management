@@ -1,101 +1,155 @@
 #include <Arduino.h>
-#include <ESP32Servo.h>
-#include <NewPing.h>
+#include <Servo.h>
 
-// Pin definitions
-#define TRIG_PIN  12
-#define ECHO_PIN  14
-#define SERVO_PIN 19
-#define MOTOR_IN1 13
-#define MOTOR_IN2 12
-#define MOTOR_IN3 14
-#define MOTOR_IN4 27
-#define MOTOR_ENA 26
-#define MOTOR_ENB 25
-#define IR1_PIN   23
-#define IR2_PIN   22
-#define IR3_PIN   21
-#define IR4_PIN   4
-#define MAX_DISTANCE 200 // Maximum distance for ultrasonic sensor
+// -------------------- Pin Definitions --------------------
+#define ENA 4
+#define IN1 16
+#define IN2 17
+#define IN3 18
+#define IN4 19
+#define ENB 5
 
-// Create servo and ultrasonic objects
-Servo myServo;
-NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
+#define TRIG_PIN 12
+#define ECHO_PIN 14
 
+#define SERVO_PIN 13
+
+#define IR_LEFT 25
+#define IR_RIGHT 26
+#define IR_FRONT_LEFT 27
+#define IR_FRONT_RIGHT 33
+
+// -------------------- Variables --------------------
+Servo myservo;
+
+long duration;
+float distance;
+int irLeft, irRight, irFrontLeft, irFrontRight;
+
+// -------------------- Setup --------------------
 void setup() {
-  // Initialize serial communication
   Serial.begin(115200);
 
-  // Attach servo
-  myServo.attach(SERVO_PIN);
+  // Motor pins
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENB, OUTPUT);
 
-  // Set motor control pins as outputs
-  pinMode(MOTOR_IN1, OUTPUT);
-  pinMode(MOTOR_IN2, OUTPUT);
-  pinMode(MOTOR_IN3, OUTPUT);
-  pinMode(MOTOR_IN4, OUTPUT);
-  pinMode(MOTOR_ENA, OUTPUT);
-  pinMode(MOTOR_ENB, OUTPUT);
+  // Ultrasonic pins
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
 
-  // Set IR sensor pins as inputs
-  pinMode(IR1_PIN, INPUT);
-  pinMode(IR2_PIN, INPUT);
-  pinMode(IR3_PIN, INPUT);
-  pinMode(IR4_PIN, INPUT);
+  // IR sensors
+  pinMode(IR_LEFT, INPUT);
+  pinMode(IR_RIGHT, INPUT);
+  pinMode(IR_FRONT_LEFT, INPUT);
+  pinMode(IR_FRONT_RIGHT, INPUT);
 
-  // Initialize motor driver with PWM for speed control
-  analogWrite(MOTOR_ENA, 128); // 50% duty cycle for motors
-  analogWrite(MOTOR_ENB, 128);
-  digitalWrite(MOTOR_IN1, LOW);
-  digitalWrite(MOTOR_IN2, LOW);
-  digitalWrite(MOTOR_IN3, LOW);
-  digitalWrite(MOTOR_IN4, LOW);
+  // Servo setup
+  myservo.attach(SERVO_PIN);
+  myservo.write(90); // Neutral position
+
+  Serial.println("System initialized: Obstacle Avoidance Active");
 }
 
+// -------------------- Functions --------------------
+float getDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  duration = pulseIn(ECHO_PIN, HIGH, 30000); // 30ms timeout
+  distance = duration * 0.034 / 2;
+  return distance;
+}
+
+void stopMotors() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}
+
+void moveForward() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 180);
+  analogWrite(ENB, 180);
+}
+
+void moveBackward() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENA, 180);
+  analogWrite(ENB, 180);
+}
+
+void turnLeft() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 180);
+  analogWrite(ENB, 180);
+}
+
+void turnRight() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENA, 180);
+  analogWrite(ENB, 180);
+}
+
+// -------------------- Main Loop --------------------
 void loop() {
-  // Read ultrasonic sensor
-  unsigned int distance = sonar.ping_cm();
+  float distance = getDistance();
+  irLeft = digitalRead(IR_LEFT);
+  irRight = digitalRead(IR_RIGHT);
+  irFrontLeft = digitalRead(IR_FRONT_LEFT);
+  irFrontRight = digitalRead(IR_FRONT_RIGHT);
+
   Serial.print("Distance: ");
-  Serial.println(distance);
+  Serial.print(distance);
+  Serial.print(" cm | IRs: ");
+  Serial.print(irLeft);
+  Serial.print(irRight);
+  Serial.print(irFrontLeft);
+  Serial.println(irFrontRight);
 
-  // Control servo based on distance
-  if (distance > 0 && distance < 20) {
-    myServo.write(90); // Stop at 90 degrees if obstacle is close
-  } else {
-    myServo.write(0); // Move to 0 degrees otherwise
+  // Avoid platform edge or obstacle
+  if (distance < 15 || irFrontLeft == LOW || irFrontRight == LOW) {
+    stopMotors();
+    myservo.write(0); // move servo to avoid obstacle (optional)
+    delay(300);
+    moveBackward();
+    delay(400);
+    turnRight();
+    delay(400);
+  }
+  else if (irLeft == LOW) {
+    turnRight();
+    delay(300);
+  }
+  else if (irRight == LOW) {
+    turnLeft();
+    delay(300);
+  }
+  else {
+    moveForward();
   }
 
-  // Read IR sensors and control motors
-  int ir1 = digitalRead(IR1_PIN);
-  int ir2 = digitalRead(IR2_PIN);
-  int ir3 = digitalRead(IR3_PIN);
-  int ir4 = digitalRead(IR4_PIN);
-
-  if (ir1 == LOW || ir2 == LOW) {
-    // Obstacle on left, turn right
-    analogWrite(MOTOR_ENA, 128);
-    analogWrite(MOTOR_ENB, 128);
-    digitalWrite(MOTOR_IN1, LOW);
-    digitalWrite(MOTOR_IN2, HIGH);
-    digitalWrite(MOTOR_IN3, HIGH);
-    digitalWrite(MOTOR_IN4, LOW);
-  } else if (ir3 == LOW || ir4 == LOW) {
-    // Obstacle on right, turn left
-    analogWrite(MOTOR_ENA, 128);
-    analogWrite(MOTOR_ENB, 128);
-    digitalWrite(MOTOR_IN1, HIGH);
-    digitalWrite(MOTOR_IN2, LOW);
-    digitalWrite(MOTOR_IN3, LOW);
-    digitalWrite(MOTOR_IN4, HIGH);
-  } else {
-    // Move forward if no obstacles
-    analogWrite(MOTOR_ENA, 128);
-    analogWrite(MOTOR_ENB, 128);
-    digitalWrite(MOTOR_IN1, HIGH);
-    digitalWrite(MOTOR_IN2, LOW);
-    digitalWrite(MOTOR_IN3, HIGH);
-    digitalWrite(MOTOR_IN4, LOW);
-  }
-
-  delay(100); // Small delay for stability
+  delay(100);
 }
