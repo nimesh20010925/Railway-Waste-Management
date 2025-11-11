@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['waste']
+
+roboflow:
+  workspace: waste-and-non-waste-detection
+  project: waste-and-non-waste-detection-1dzta
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/waste-and-non-waste-detection/waste-and-non-waste-detection-1dzta/dataset/1
