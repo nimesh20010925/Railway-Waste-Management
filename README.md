@@ -1,5 +1,4 @@
 # Railway-Waste-Management
-# 🚆 Intelligent Multi-Robot IoT-Based Waste Management System for Railway Stations
 
 ## 📌 Project Overview
 Railway stations experience large passenger volumes, especially during peak hours, making manual waste collection unsafe, inefficient, and labor-intensive. This research proposes an **intelligent, time-aware, multi-robot waste management system** designed to automate garbage collection, classification, and monitoring while minimizing human involvement.
@@ -63,12 +62,11 @@ The system integrates **CCTV-based crowd analysis**, a **mobile garbage-collecti
 
 ### 4️⃣ Smart Disposal Bins
 - Separate bins for each waste category  
-- Equipped with ultrasonic and weight sensors  
+- Equipped with ultrasonic sensors  
 - Prevent delayed collection and hygiene issues  
 
 ### 5️⃣ Mobile Notification Application
-- Sends real-time bin-full alerts  
-- Displays bin category and status  
+- Sends real-time bin-full alerts    
 - Enables faster response from cleaning staff  
 
 
@@ -95,8 +93,7 @@ The system integrates **CCTV-based crowd analysis**, a **mobile garbage-collecti
 ### Software & Development
 - Arduino IDE (ESP32 firmware)  
 - Flutter (Mobile Application)  
-- Firebase / Cloud REST services  
-- Figma (UI & system design)  
+- Firebase / Cloud REST services    
 
 ## 🌍 Application Domain
 - Smart Transportation Systems  
@@ -132,7 +129,7 @@ The system integrates **CCTV-based crowd analysis**, a **mobile garbage-collecti
 - ✔ Crowd analysis logic designed  
 - ✔ Mobile robot navigation workflow defined  
 - ✔ YOLOv8-based detection and classification planned  
-- ✔ Robotic arm sorting mechanism implemented  
+- ✔ Robotic arm mechanism implemented  
 - ✔ Mobile app UI and notification flow designed  
 
 
